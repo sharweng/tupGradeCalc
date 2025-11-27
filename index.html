@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TUP Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body>
+    <div
+      id="calculator"
+      class="max-w-xl mx-auto mt-8 p-6 bg-white rounded shadow"
+    >
+      <h1 class="text-4xl font-bold text-center text-red-600 mb-8">
+        GPA Calculator
+      </h1>
+      <div class="overflow-x-auto">
+        <table class="min-w-full border border-gray-300 rounded-lg">
+          <thead>
+            <tr class="bg-red-100">
+              <th class="px-4 py-2 text-left">No.</th>
+              <th class="px-4 py-2 text-center">Units</th>
+              <th class="px-4 py-2 text-center">Grade</th>
+              <th class="px-4 py-2 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="subjects"></tbody>
+        </table>
+      </div>
+      <div class="flex flex-wrap gap-4 mt-6 justify-center">
+        <button
+          id="addSubject"
+          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg"
+        >
+          Add Subject
+        </button>
+        <button
+          id="calculate"
+          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg"
+        >
+          Calculate GPA
+        </button>
+        <button
+          id="clearAll"
+          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg"
+        >
+          Clear All
+        </button>
+      </div>
+      <div class="flex flex-wrap gap-4 mt-6 justify-center items-center">
+        <label for="goal" class="text-red-600 font-bold text-lg">Goal:</label>
+        <select
+          id="goal"
+          class="border border-gray-300 rounded px-4 py-2 text-lg"
+        >
+          <option value="PL">President's Lister</option>
+          <option value="DL">Dean's Lister</option>
+          <option value="PASSED">Passed</option>
+        </select>
+        <button
+          id="autoCalcGo"
+          class="bg-blue-600 hover:bg-blue-800 text-white px-6 py-3 rounded text-lg"
+        >
+          Calculate for Goal
+        </button>
+      </div>
+      <div id="result" class="mt-8 text-3xl text-center text-red-600"></div>
+
+      <div class="mt-8 p-4 bg-gray-100 rounded">
+        <h2 class="text-xl font-bold text-gray-800 mb-3">Instructions:</h2>
+        <ul class="list-disc list-inside text-gray-700 space-y-2">
+          <li>
+            Enter the <strong>Units</strong> and select the
+            <strong>Grade</strong> for each subject
+          </li>
+          <li>
+            <strong>Check the checkbox</strong> to lock a subject's grade (use
+            this for subjects where you already know your grade)
+          </li>
+          <li>
+            Leave <strong>unchecked</strong> for subjects you want to calculate
+            grades for when using "Calculate for Goal"
+          </li>
+          <li>
+            Click <strong>"Calculate GPA"</strong> to see your current GPA
+          </li>
+          <li>
+            Click <strong>"Calculate for Goal"</strong> to find the minimum
+            grades needed on unlocked subjects to achieve your target
+          </li>
+        </ul>
+
+        <h2 class="text-xl font-bold text-gray-800 mt-6 mb-3">
+          Grade Criteria:
+        </h2>
+        <ul class="list-disc list-inside text-gray-700 space-y-1">
+          <li><strong>President's Lister:</strong> 1.00 - 1.45</li>
+          <li><strong>Dean's Lister:</strong> 1.45 - 1.75</li>
+          <li><strong>Passed:</strong> 1.75 - 3.00</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      function focusNext(selector, current) {
+        const elements = Array.from(document.querySelectorAll(selector));
+        const idx = elements.indexOf(current);
+        if (idx !== -1 && idx < elements.length - 1) {
+          elements[idx + 1].focus();
+        }
+      }
+
+      function addTabNavigation() {
+        document.querySelectorAll(".units").forEach(function (input) {
+          input.addEventListener("keydown", function (e) {
+            if (e.key === "Tab" && !e.shiftKey) {
+              e.preventDefault();
+              focusNext(".units", input);
+            }
+          });
+        });
+        document.querySelectorAll(".grade").forEach(function (select) {
+          select.addEventListener("keydown", function (e) {
+            if (e.key === "Tab" && !e.shiftKey) {
+              e.preventDefault();
+              focusNext(".grade", select);
+            }
+          });
+        });
+      }
+
+      function getSubjectsData() {
+        var subjects = [];
+        var subjectDivs = document.querySelectorAll(".subject");
+        subjectDivs.forEach(function (div) {
+          var units = div.querySelector(".units").value;
+          var grade = div.querySelector(".grade").value;
+          var final = div.querySelector(".finalCheck")?.checked || false;
+          subjects.push({ units: units, grade: grade, final: final });
+        });
+        return subjects;
+      }
+
+      function setSubjectsData(subjects) {
+        var subjectsContainer = document.getElementById("subjects");
+        subjectsContainer.innerHTML = "";
+        // Always render at least one row
+        if (!subjects || subjects.length === 0) {
+          subjects = [{ units: "", grade: "", final: false }];
+        }
+        var tr;
+        subjects.forEach(function (subj, idx) {
+          tr = document.createElement("tr");
+          tr.className = "border-b border-gray-200 subject";
+          var disableRemove = subjects.length === 1 ? "disabled" : "";
+          tr.innerHTML =
+            '<td class="px-4 py-2 font-bold text-gray-700">' +
+            (idx + 1) +
+            "</td>" +
+            '<td class="px-4 py-2 text-center"><input type="number" class="units border border-gray-300 rounded px-2 py-1 w-20 text-center" min="1" step="1" value="' +
+            (subj.units || "") +
+            '"></td>' +
+            '<td class="px-4 py-2 text-center"><select class="grade border border-gray-300 rounded px-2 py-1 w-24 text-center">' +
+            '<option value="1.00">1.00</option>' +
+            '<option value="1.25">1.25</option>' +
+            '<option value="1.50">1.50</option>' +
+            '<option value="1.75">1.75</option>' +
+            '<option value="2.00">2.00</option>' +
+            '<option value="2.25">2.25</option>' +
+            '<option value="2.50">2.50</option>' +
+            '<option value="2.75">2.75</option>' +
+            '<option value="3.00">3.00</option>' +
+            '<option value="5.00">5.00</option>' +
+            "</select></td>" +
+            '<td class="px-4 py-2 text-center"><div class="flex items-center justify-center gap-2"><input type="checkbox" class="finalCheck" ' +
+            (subj.final ? "checked" : "") +
+            '><button onclick="removeSubject(this)" class="bg-red-600 hover:bg-red-800 text-white px-3 py-1 rounded" ' +
+            disableRemove +
+            ">Remove</button></div></td>";
+          subjectsContainer.appendChild(tr);
+          // Set selected grade
+          tr.querySelector(".grade").value = subj.grade || "";
+        });
+        addTabNavigation();
+      }
+
+      function saveData() {
+        var subjects = getSubjectsData();
+        localStorage.setItem("subjects", JSON.stringify(subjects));
+        var gpa = document.getElementById("result").textContent;
+        localStorage.setItem("gpa", gpa);
+      }
+
+      function loadData() {
+        var subjects = localStorage.getItem("subjects");
+        if (subjects) {
+          setSubjectsData(JSON.parse(subjects));
+        }
+        var gpa = localStorage.getItem("gpa");
+        if (gpa) {
+          document.getElementById("result").textContent = gpa;
+        }
+      }
+
+      document.getElementById("addSubject").onclick = function () {
+        var subjects = getSubjectsData();
+        subjects.push({ units: "", grade: "", final: false });
+        setSubjectsData(subjects);
+        saveData();
+      };
+
+      window.removeSubject = function (btn) {
+        var subjects = getSubjectsData();
+        var row = btn.closest("tr");
+        var rowIndex = Array.from(row.parentElement.children).indexOf(row);
+        subjects.splice(rowIndex, 1);
+        setSubjectsData(subjects);
+        saveData();
+      };
+
+      document.getElementById("calculate").onclick = function () {
+        var units = document.querySelectorAll(".units");
+        var grades = document.querySelectorAll(".grade");
+        var hasEmptyUnits = false;
+        var hasEmptyGrades = false;
+        var totalPoints = 0;
+        var totalUnits = 0;
+
+        if (units.length === 0) {
+          alert("Please add at least one subject before calculating GPA!");
+          return;
+        }
+
+        for (var i = 0; i < units.length; i++) {
+          var u = parseFloat(units[i].value);
+          var g = parseFloat(grades[i].value);
+
+          if (!units[i].value || units[i].value.trim() === "") {
+            hasEmptyUnits = true;
+          }
+          if (!grades[i].value || grades[i].value.trim() === "") {
+            hasEmptyGrades = true;
+          }
+
+          if (!isNaN(u) && !isNaN(g) && u > 0) {
+            totalPoints += u * g;
+            totalUnits += u;
+          }
+        }
+
+        if (hasEmptyUnits) {
+          alert("Please fill in all Units fields before calculating!");
+          return;
+        }
+        if (hasEmptyGrades) {
+          alert("Please fill in all Grade fields before calculating!");
+          return;
+        }
+
+        var gpa =
+          totalUnits > 0 ? (totalPoints / totalUnits).toFixed(3) : "0.000";
+        document.getElementById("result").innerHTML = "GPA: " + gpa;
+        saveData();
+      };
+
+      document.getElementById("clearAll").onclick = function () {
+        setSubjectsData([{ units: "", grade: "" }]);
+        document.getElementById("result").innerHTML = "";
+        localStorage.removeItem("subjects");
+        localStorage.removeItem("gpa");
+      };
+
+      // Save data on input change
+      document
+        .getElementById("subjects")
+        .addEventListener("input", function () {
+          saveData();
+        });
+
+      document.getElementById("autoCalcGo").onclick = function () {
+        var subjects = getSubjectsData();
+        var goal = document.getElementById("goal").value;
+        var gradeOptions = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0];
+        var targetMin, targetMax;
+
+        if (goal === "PL") {
+          targetMin = 1.0;
+          targetMax = 1.45;
+        } else if (goal === "DL") {
+          targetMin = 1.45;
+          targetMax = 1.75;
+        } else {
+          targetMin = 1.75;
+          targetMax = 3.0;
+        }
+
+        // Check for locked subjects with no grade
+        var lockedNoGrade = subjects.filter(
+          (s) => s.final && (!s.grade || s.grade.trim() === "")
+        );
+        if (lockedNoGrade.length > 0) {
+          alert(
+            "There is a locked subject with no grade. Please fill in all locked grades before calculating for goal!"
+          );
+          return;
+        }
+
+        // Calculate locked subjects
+        var locked = subjects.filter((s) => s.final);
+        var unlocked = subjects.filter((s) => !s.final);
+        var totalUnits = 0;
+        var totalPoints = 0;
+
+        locked.forEach((s) => {
+          var u = parseFloat(s.units);
+          var g = parseFloat(s.grade);
+          if (!isNaN(u) && !isNaN(g) && u > 0) {
+            totalUnits += u;
+            totalPoints += u * g;
+          }
+        });
+
+        var unlockedUnits = 0;
+        unlocked.forEach((s) => {
+          var u = parseFloat(s.units);
+          if (!isNaN(u) && u > 0) {
+            unlockedUnits += u;
+          }
+        });
+
+        if (unlockedUnits === 0) {
+          alert("No unlocked subjects with units to calculate!");
+          return;
+        }
+
+        // Find the highest (worst) grade that still achieves the goal
+        var selectedGrade = null;
+
+        // Try grades from highest to lowest to find the worst grade that still meets goal
+        for (var i = gradeOptions.length - 1; i >= 0; i--) {
+          var g = gradeOptions[i];
+          var testGPA =
+            (totalPoints + unlockedUnits * g) / (totalUnits + unlockedUnits);
+
+          // Check if this grade keeps us within the target range
+          if (testGPA >= targetMin && testGPA <= targetMax) {
+            selectedGrade = g;
+            break;
+          }
+        }
+
+        // If no valid grade found, use the best possible (1.00) and warn user
+        if (selectedGrade === null) {
+          selectedGrade = gradeOptions[0];
+          var resultGPA =
+            (totalPoints + unlockedUnits * selectedGrade) /
+            (totalUnits + unlockedUnits);
+          if (resultGPA > targetMax) {
+            alert("Goal cannot be achieved even with perfect 1.00 grades!");
+          } else if (resultGPA < targetMin) {
+            alert("You need higher grades to reach this goal!");
+            return;
+          }
+        }
+
+        // Assign selectedGrade to all unlocked subjects
+        subjects = subjects.map((s) => {
+          if (!s.final) {
+            return {
+              units: s.units,
+              grade: selectedGrade.toFixed(2),
+              final: false,
+            };
+          }
+          return s;
+        });
+
+        setSubjectsData(subjects);
+        saveData();
+        document.getElementById("calculate").click();
+      };
+
+      // Initial load
+      loadData();
+      addTabNavigation();
+    </script>
+  </body>
+</html>
