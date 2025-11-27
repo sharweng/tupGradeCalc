@@ -2,15 +2,116 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>TUP Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      /* Uniform height for table row controls */
+      @media (max-width: 500px) {
+        td .units,
+        td .grade,
+        td button {
+          height: 2.5rem !important;
+          min-height: 2.5rem !important;
+          box-sizing: border-box;
+        }
+        td .grade {
+          width: 100% !important;
+          min-width: 7rem !important;
+          max-width: 100%;
+        }
+      }
+      @media (min-width: 501px) {
+        td .units,
+        td .grade,
+        td button {
+          height: 2.5rem !important;
+          min-height: 2.5rem !important;
+          box-sizing: border-box;
+        }
+      }
+      /* Custom column widths for table */
+      @media (max-width: 500px) {
+        th:nth-child(1),
+        td:nth-child(1) {
+          width: 2rem !important;
+          min-width: 2rem !important;
+        }
+        th:nth-child(3),
+        td:nth-child(3) {
+          width: 8rem !important;
+          min-width: 8rem !important;
+        }
+        td .grade {
+          width: 100% !important;
+          min-width: 7rem !important;
+          max-width: 100%;
+        }
+      }
+      @media (max-width: 500px) {
+        #calculator {
+          padding: 1rem !important;
+        }
+        .min-w-full {
+          min-width: 0 !important;
+          width: 100% !important;
+        }
+        table {
+          font-size: 0.95rem;
+          width: 100% !important;
+        }
+        thead,
+        tbody,
+        tr,
+        th,
+        td {
+          width: auto !important;
+        }
+        .px-4 {
+          padding-left: 0.5rem !important;
+          padding-right: 0.5rem !important;
+        }
+        .py-2 {
+          padding-top: 0.5rem !important;
+          padding-bottom: 0.5rem !important;
+        }
+        .text-lg {
+          font-size: 1rem !important;
+        }
+        .px-6 {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+        .py-3 {
+          padding-top: 0.75rem !important;
+          padding-bottom: 0.75rem !important;
+        }
+        .w-20,
+        .w-24 {
+          width: 3.5rem !important;
+        }
+        .gap-4 {
+          gap: 0.5rem !important;
+        }
+        #result {
+          font-size: 2rem !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <div
       id="calculator"
-      class="max-w-xl mx-auto mt-8 p-6 bg-white rounded shadow"
+      class="max-w-xl mx-auto mt-4 p-4 bg-white rounded shadow"
     >
+      <style>
+        body {
+          background-color: #fee2e2;
+        }
+      </style>
       <h1 class="text-4xl font-bold text-center text-red-600 mb-8">
         GPA Calculator
       </h1>
@@ -30,19 +131,22 @@
       <div class="flex flex-wrap gap-4 mt-6 justify-center">
         <button
           id="addSubject"
-          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg"
+          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg w-full sm:w-auto"
+          style="min-width: 120px"
         >
           Add Subject
         </button>
         <button
           id="calculate"
-          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg"
+          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg w-full sm:w-auto"
+          style="min-width: 120px"
         >
           Calculate GPA
         </button>
         <button
           id="clearAll"
-          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg"
+          class="bg-red-600 hover:bg-red-800 text-white px-6 py-3 rounded text-lg w-full sm:w-auto"
+          style="min-width: 120px"
         >
           Clear All
         </button>
@@ -51,7 +155,7 @@
         <label for="goal" class="text-red-600 font-bold text-lg">Goal:</label>
         <select
           id="goal"
-          class="border border-gray-300 rounded px-4 py-2 text-lg"
+          class="border border-gray-300 rounded px-4 py-2 text-lg w-full sm:w-auto"
         >
           <option value="PL">President's Lister</option>
           <option value="DL">Dean's Lister</option>
@@ -59,7 +163,8 @@
         </select>
         <button
           id="autoCalcGo"
-          class="bg-blue-600 hover:bg-blue-800 text-white px-6 py-3 rounded text-lg"
+          class="bg-blue-600 hover:bg-blue-800 text-white px-6 py-3 rounded text-lg w-full sm:w-auto"
+          style="min-width: 120px"
         >
           Calculate for Goal
         </button>
@@ -194,7 +299,16 @@
       function loadData() {
         var subjects = localStorage.getItem("subjects");
         if (subjects) {
-          setSubjectsData(JSON.parse(subjects));
+          var parsedSubjects = JSON.parse(subjects);
+          // If no subjects, render at least one row
+          if (!parsedSubjects || parsedSubjects.length === 0) {
+            setSubjectsData([{ units: "", grade: "", final: false }]);
+          } else {
+            setSubjectsData(parsedSubjects);
+          }
+        } else {
+          // No saved subjects, render at least one row
+          setSubjectsData([{ units: "", grade: "", final: false }]);
         }
         var gpa = localStorage.getItem("gpa");
         if (gpa) {
